@@ -1,86 +1,11 @@
 import random
 import pygame
+from constants  import BLACK, WHITE, RED, gWidth, gHeight, REFRESH, \
+                       BallSpeedPix, AddSpeedBall, LIFE, Xdeviation, \
+                       BALL_AMOUNT, COM_LEVEL
+from player     import Player
+from ball       import Ball
 
-# region Definitions
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-gWidth = 500
-gHeight = 500
-REFRESH = 60
-BallSpeedPix = 1.9
-AddSpeedBall = 0.1
-LIFE = 2
-Xdeviation = 15
-BALL_AMOUNT = 1
-COM_LEVEL = 15  # medium
-
-
-# endregion
-
-# region classes
-class GameSprite(pygame.sprite.Sprite):
-    def update_loc(self, x, y):
-        self.rect.x = x
-        self.rect.y = y
-
-    def get_pos(self):
-        return self.rect.x, self.rect.y
-
-    def get_posX(self):
-        return self.rect.x
-
-    def get_posY(self):
-        return self.rect.y
-
-    def get_width(self):
-        return self.rect.width
-
-    def get_height(self):
-        return self.rect.height
-
-
-class Player(GameSprite):
-    def __init__(self, x, y):
-        super(Player, self).__init__()
-        self.image = pygame.image.load('sprite.png').convert()
-        self.image.set_colorkey(BLACK)
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y - self.get_height() / 2
-        self.leftLife = LIFE
-        self.rightLife = LIFE
-
-    def update_left_Life(self):
-        self.leftLife -= 1
-
-    def update_right_Life(self):
-        self.rightLife -= 1
-
-    def get_life(self):
-        return self.leftLife, self.rightLife
-
-
-class Ball(GameSprite):
-    def __init__(self, x, y):
-        super(Ball, self).__init__()
-        self.image = pygame.image.load('ball.png').convert()
-        self.image.set_colorkey(BLACK)
-        self.rect = self.image.get_rect()
-        self.rect.x = x - self.get_width() / 2
-        self.rect.y = y - self.get_height() / 2
-        self.xMOve = BallSpeedPix
-        self.yMove = -BallSpeedPix
-
-    def update_Move(self, x, y):
-        self.xMOve = x
-        self.yMove = y
-
-    def get_move(self):
-        return self.xMOve, self.yMove
-
-
-# endregion
 
 def main():
     pygame.font.init()
