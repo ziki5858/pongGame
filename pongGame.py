@@ -6,6 +6,7 @@ from constants  import BLACK, WHITE, RED, gWidth, gHeight, REFRESH, \
 from player     import Player
 from ball       import Ball
 
+sprite_speed = 25
 
 def main():
     pygame.font.init()
@@ -76,37 +77,59 @@ def captions(font, caption, size, color, x, y,flip):
         pygame.display.flip()
 
 
+# at module scope, define your key/movement maps once
+UP_DOWN_LEFT  = [pygame.K_s, pygame.K_w]
+UP_DOWN_RIGHT = [pygame.K_DOWN, pygame.K_UP]
+
+def get_paddles():
+    """Return left- and right-paddle sprites."""
+    sprites = sprite_list.sprites()
+    return sprites[0], sprites[1]
+
+def get_positions(lSprite, rSprite):
+    """Fetch x/y for both paddles and the first ball."""
+    xL, yL = lSprite.get_pos()
+    xR, yR = rSprite.get_pos()
+    xB, yB = ball_list.sprites()[0].get_pos()
+    return xL, yL, xR, yR, xB, yB
+
+def handle_player_move(event, sprite, x, y, key_map, speed):
+    """If event matches one of key_map, move that sprite."""
+    for dir_idx, key in enumerate(key_map):
+        if event.key == key:
+            new_y = checkBorderS(y, speed[dir_idx], sprite.get_height())
+            sprite.update_loc(x, new_y)
+            break
+
+def handle_ai_move(rSprite, xR, yR, yBall, speed):
+    """Exactly the same AI logic as before."""
+    if yBall > yR:
+        new_y = checkBorderS(yR, speed[0], rSprite.get_height())
+        if new_y > yBall:
+            new_y = yBall
+    else:
+        new_y = checkBorderS(yR, speed[1], rSprite.get_height())
+        if new_y < yBall:
+            new_y = yBall
+    rSprite.update_loc(xR, new_y)
+
 def sprite_movement(event):
-    lSprite = sprite_list.sprites()[0]
-    rSprite = sprite_list.sprites()[1]
-    xLeft, yLeft = lSprite.get_pos()
-    xRight, yRight = rSprite.get_pos()
-    xBall, yBall = ball_list.sprites()[0].get_pos()
-    """needd to bee good to copule balls to"""
-    upDownLeft = [pygame.K_s, pygame.K_w]
-    upDownRight = [pygame.K_DOWN, pygame.K_UP]
-    moveAmount = [22, -22]
+    lSprite, rSprite = get_paddles()
+    xL, yL, xR, yR, xB, yB = get_positions(lSprite, rSprite)
+    speed = [sprite_speed, -sprite_speed]
+
     for i in range(2):
         if event is not None:
-            if event.key == upDownLeft[i]:
-                y_new_location = checkBorderS(yLeft, moveAmount[i], lSprite.get_height())
-                lSprite.update_loc(xLeft, y_new_location)
-        if not against_com:
-            if event.key == upDownRight[i]:
-                y_new_location = checkBorderS(yRight, moveAmount[i], rSprite.get_height())
-                rSprite.update_loc(xRight, y_new_location)
+            # left paddle
+            handle_player_move(event, lSprite, xL, yL, UP_DOWN_LEFT, speed)
+
+            # right paddle (human)
+            if not against_com:
+                handle_player_move(event, rSprite, xR, yR, UP_DOWN_RIGHT, speed)
+
+        # right paddle (AI)
         if against_com:
-            if yBall > yRight:
-                y_new_location = checkBorderS(yRight, moveAmount[0], rSprite.get_height())
-                if y_new_location > yBall:
-                    y_new_location = yBall
-            else:
-                y_new_location = checkBorderS(yRight, moveAmount[1], rSprite.get_height())
-                if y_new_location < yBall:
-                    y_new_location = yBall
-
-            rSprite.update_loc(xRight, y_new_location)
-
+            handle_ai_move(rSprite, xR, yR, yB, speed)
 
 def checkBorderS(object_y, move_amount, paddle_height):
     if 0 > object_y + move_amount:
