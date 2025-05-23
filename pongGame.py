@@ -40,23 +40,29 @@ def againstWho():
     captions(50, 'press f for friend com', 1, BLACK, 20, 200,True)
     return check_quit('start')
 
-
 def upload_sprites():
-    """create sprites and balls in position on the board"""
-    global sprite_list
-    global ball_list
+    """Create and position player paddles and balls on the board."""
+    global sprite_list, ball_list
+
+    # Initialize sprite groups
     sprite_list = pygame.sprite.Group()
     ball_list = pygame.sprite.Group()
-    nextSpriteD = 0
-    for i in range(int(2)):
-        sprite_list.add(Player(nextSpriteD, gHeight / 2))
-        nextSpriteD = gWidth - sprite_list.sprites()[i].get_width()
-    for i in range(int(BALL_AMOUNT)):
+
+    # Create left paddle and determine its width
+    left_paddle = Player(0, gHeight / 2)
+    paddle_width = left_paddle.get_width()
+    # Create right paddle at the opposite edge
+    right_paddle = Player(gWidth - paddle_width, gHeight / 2)
+    sprite_list.add(left_paddle, right_paddle)
+
+    # Create balls centered on the screen
+    for _ in range(BALL_AMOUNT):
         ball_list.add(Ball(gWidth / 2, gHeight / 2))
+
+    # Draw and update display
     sprite_list.draw(screen)
     ball_list.draw(screen)
     pygame.display.flip()
-
 
 def r_screen(bColor, sColor):
     """get background color, sketch color
@@ -101,35 +107,43 @@ def handle_player_move(event, sprite, x, y, key_map, speed):
             sprite.update_loc(x, new_y)
             break
 
-def handle_ai_move(rSprite, xR, yR, yBall, speed):
-    """Exactly the same AI logic as before."""
-    if yBall > yR:
-        new_y = checkBorderS(yR, speed[0], rSprite.get_height())
-        if new_y > yBall:
-            new_y = yBall
+def handle_ai_move(rSprite, xR, yR, ball_center, max_step):
+    """Move paddle toward ball center with capped speed and dead zone."""
+    # Compute paddle center
+    paddle_center = yR + rSprite.get_height() * 0.5
+
+    # Compute difference
+    delta = ball_center - paddle_center
+
+    # Dead zone: no movement if very close
+    dead_zone = 10
+    if abs(delta) <= dead_zone:
+        step = 0
     else:
-        new_y = checkBorderS(yR, speed[1], rSprite.get_height())
-        if new_y < yBall:
-            new_y = yBall
+        # Cap movement per frame
+        step = max(-max_step, min(delta, max_step))
+
+    # Clamp within screen
+    new_y = checkBorderS(yR, step, rSprite.get_height())
     rSprite.update_loc(xR, new_y)
 
 def sprite_movement(event):
     lSprite, rSprite = get_paddles()
     xL, yL, xR, yR, xB, yB = get_positions(lSprite, rSprite)
-    speed = [sprite_speed, -sprite_speed]
+    speed = sprite_speed  # single value now
 
-    for i in range(2):
-        if event is not None:
-            # left paddle
-            handle_player_move(event, lSprite, xL, yL, UP_DOWN_LEFT, speed)
+    # Compute ball center once
+    ball = ball_list.sprites()[0]
+    ball_center = yB + ball.get_height() * 0.5
 
-            # right paddle (human)
-            if not against_com:
-                handle_player_move(event, rSprite, xR, yR, UP_DOWN_RIGHT, speed)
+    if event is not None:
+        handle_player_move(event, lSprite, xL, yL, UP_DOWN_LEFT, [speed, -speed])
+        if not against_com:
+            handle_player_move(event, rSprite, xR, yR, UP_DOWN_RIGHT, [speed, -speed])
 
-        # right paddle (AI)
-        if against_com:
-            handle_ai_move(rSprite, xR, yR, yB, speed)
+    if against_com:
+        handle_ai_move(rSprite, xR, yR, ball_center, speed)
+
 
 def checkBorderS(object_y, move_amount, paddle_height):
     if 0 > object_y + move_amount:
@@ -139,69 +153,108 @@ def checkBorderS(object_y, move_amount, paddle_height):
     return object_y + move_amount
 
 
+import random
+
+def handle_paddle_collision(
+    ball,
+    left_paddle,
+    right_paddle,
+    xMove,
+    paddle_w,
+    paddle_h,
+    sound_effect,
+    rList
+):
+    """Return new (xMove, yMove) if ball collides with either paddle, else None."""
+    xBall, yBall = ball.get_pos()
+    # Iterate over paddles to remove duplication
+    for paddle, side in ((right_paddle, 'r'), (left_paddle, 'l')):
+        if check_borders_ball(
+            xBall, yBall,
+            *paddle.get_pos(),
+            paddle_w,
+            paddle_h,
+            side,
+            yBall + ball.get_height()
+        ):
+            sound(sound_effect)
+            # Determine bounce direction: -1 for right paddle, +1 for left
+            direction = -1 if side == 'r' else 1
+            new_x = direction * abs(xMove) + direction * AddSpeedBall
+            new_y = random.choice(rList)
+            return new_x, new_y
+    return None
+
+
+def handle_wall_collision(yBall, yMove, ball_height):
+    """Return new yMove if ball collides with top/bottom walls, else None."""
+    # Top wall collision
+    if yBall <= 0:
+        return abs(yMove)
+    # Bottom wall collision
+    if yBall >= gHeight - ball_height:
+        return -abs(yMove)
+    return None
+
+
+def handle_side_collision(ball, soundList, index):
+    """Handle scoring when ball hits left/right edge and return reset velocities."""
+    edgePoint(soundList, index)             # play scoring sound and update score
+    xBall, _ = ball.get_pos()
+    # If ball went out on left, send right; else send left
+    if xBall <= 0:
+        return BallSpeedPix, -BallSpeedPix
+    return -BallSpeedPix, BallSpeedPix
+
+
+def update_and_draw(ball, xMove, yMove):
+    """Apply movement deltas and update ball position on screen."""
+    ball.update_Move(xMove, yMove)          # update ball's dx, dy
+    x, y = ball.get_pos()
+    ball.update_loc(x + xMove, y + yMove)   # move ball to new position
+
+
 def ball_move():
-    """get: amount of balls  and sound list """
-    rList = [abs(BallSpeedPix), (-abs(BallSpeedPix))]
+    """Move balls and handle all collisions without code duplication."""
+    # Precompute vertical speed options
+    rList = [abs(BallSpeedPix), -abs(BallSpeedPix)]
     soundList = upload_sound()
 
-    for i in range(BALL_AMOUNT):
-        # region definitions
-        ball = ball_list.sprites()[i]
-        check_game_over(*sprite_list.sprites()[0].get_life())
+    # Get paddles and their dimensions
+    left_paddle, right_paddle = sprite_list.sprites()
+    paddle_w = right_paddle.get_width()
+    paddle_h = right_paddle.get_height()
+
+    for i, ball in enumerate(ball_list.sprites()):
+        # Check game over condition each frame
+        check_game_over(*left_paddle.get_life())
+
+        # Current position and movement
         xBall, yBall = ball.get_pos()
-        xLeft, yLeft = sprite_list.sprites()[0].get_pos()
-        xRight, yRight = sprite_list.sprites()[1].get_pos()
-        xMovement, yMovement = ball.get_move()
-        paddleWidth = sprite_list.sprites()[1].get_width()
-        paddleHeight = sprite_list.sprites()[1].get_height()
+        xMove, yMove = ball.get_move()
 
-        # endregion
+        # 1. Paddle collisions
+        paddle_result = handle_paddle_collision(
+            ball, left_paddle, right_paddle, xMove,
+            paddle_w, paddle_h, soundList[0], rList
+        )
+        if paddle_result:
+            xMove, yMove = paddle_result
+        else:
+            # 2. Wall collisions (top/bottom)
+            wall_result = handle_wall_collision(yBall, yMove, ball.get_height())
+            if wall_result is not None:
+                yMove = wall_result
+            else:
+                # 3. Side collisions (scoring)
+                if xBall <= 0 or xBall >= gWidth - ball.get_width():
+                    xMove, yMove = handle_side_collision(ball, soundList, i)
 
-        # region paddles touch
+        # Apply movement and redraw ball
+        update_and_draw(ball, xMove, yMove)
 
-        if checkBordersB(xBall, yBall, xRight, yRight, paddleWidth, paddleHeight, 'r', yBall + ball.get_height()):
-            sound(soundList[0])
-            xMovement = -abs(xMovement) - AddSpeedBall
-            yMovement = random.choice(rList)
-
-        elif checkBordersB(xBall, yBall, xLeft, yLeft, paddleWidth, paddleHeight, 'l', yBall + ball.get_height()):
-            sound(soundList[0])
-            xMovement = abs(xMovement) + AddSpeedBall
-            yMovement = random.choice(rList)
-
-
-        # endregion
-
-        # region edges touch
-        elif gHeight - ball.get_height() <= yBall:
-            yMovement = -abs(yMovement)
-
-        elif 0 >= yBall:
-            yMovement = abs(yMovement)
-        # endregion
-
-        # region Touching the sides - point
-        elif gWidth - ball.get_width() <= xBall:
-            edgePoint(soundList, i)
-            xBall, yBall = ball.get_pos()
-            xMovement = -BallSpeedPix
-            yMovement = BallSpeedPix
-
-
-        elif 0 >= xBall:
-            edgePoint(soundList, i)
-            xBall, yBall = ball.get_pos()
-            xMovement = BallSpeedPix
-            yMovement = -BallSpeedPix
-        # endregion
-
-        ball.update_Move(xMovement, yMovement)
-        xMovement, yMovement = ball.get_move()
-        xBall += xMovement
-        yBall += yMovement
-        ball.update_loc(xBall, yBall)
-        r_screen(WHITE, RED)
-
+    # Refresh the screen once after moving all balls
+    r_screen(WHITE, RED)
 
 def edgePoint(soundList, i):
     sound(soundList[1])
@@ -209,15 +262,22 @@ def edgePoint(soundList, i):
     sprite_list.sprites()[0].update_right_Life()
 
 
-def checkBordersB(x_ball, y_ball, x_paddle, y_paddle, paddle_width, paddle_height, paddle_side, y_ball_dowm_Edge):
-    range_paddle = range(y_paddle, y_paddle + paddle_height)
-    if y_ball in range_paddle or y_ball_dowm_Edge in range_paddle:
-        if paddle_side == "r":
-            if x_ball >= x_paddle - Xdeviation - paddle_width:
-                return True
-        elif x_ball <= x_paddle + Xdeviation:
-            return True
+def check_borders_ball(
+    x_ball, y_ball, x_paddle, y_paddle,
+    paddle_width, paddle_height, paddle_side,
+    y_ball_bottom
+) -> bool:
+    """ return True if ball overlaps paddle. """
 
+    # vertical overlap check
+    if y_ball_bottom < y_paddle or y_ball > y_paddle + paddle_height:
+        return False
+
+    # check with tolerance
+    if paddle_side == 'r':
+        return x_ball >= x_paddle - Xdeviation - paddle_width
+    else:
+        return x_ball <= x_paddle + Xdeviation
 
 def ball_to_center(i):
     """get: ball place in balls list
