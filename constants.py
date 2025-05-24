@@ -18,3 +18,4 @@ BALL_AMOUNT    = 1
 LIFE        = 2
 Xdeviation  = 15
 COM_LEVEL   = 15  # medium AI difficulty
+
