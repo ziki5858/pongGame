@@ -13,8 +13,8 @@ class GameTextManager:
 
     @staticmethod
     def show_score():
-        left = GlobalData.sprite_list.sprites()[0].get_life()
-        right = GlobalData.sprite_list.sprites()[1].get_life()
+        left = GlobalData.sprite_list.sprites()[0].get_life()[0]
+        right = GlobalData.sprite_list.sprites()[1].get_life()[1]
 
         font = pygame.font.Font(None, 50)
         text1 = font.render(f'Left: {left}', True, BLACK)

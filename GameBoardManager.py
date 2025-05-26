@@ -23,23 +23,20 @@ class GameBoardManager:
         GlobalData.sprite_list.empty()
         GlobalData.ball_list.empty()
 
-        left_paddle = Player(0, gHeight / 2)
-        right_paddle = Player(gWidth - left_paddle.get_width(), gHeight / 2)
+        left_paddle = Player(0, gHeight / 2, GlobalData.player_life)
+        right_paddle = Player(gWidth - left_paddle.get_width(), gHeight / 2, GlobalData.player_life)
         GlobalData.sprite_list.add(left_paddle, right_paddle)
 
-        for _ in range(BALL_AMOUNT):
+        for _ in range(GlobalData.ball_amount):
             GlobalData.ball_list.add(Ball(gWidth / 2, gHeight / 2))
 
-        GlobalData.sprite_list.draw(GlobalData.screen)
-        GlobalData.ball_list.draw(GlobalData.screen)
-        pygame.display.flip()
+        GameBoardManager.redraw()
 
     @staticmethod
     def r_screen(bColor, sColor):
         GameBoardManager.clear_screen(bColor)
         GameBoardManager.draw_center_line(sColor)
-        GlobalData.sprite_list.draw(GlobalData.screen)
-        GlobalData.ball_list.draw(GlobalData.screen)
+        GameBoardManager.redraw()
         GameTextManager.show_score()
         pygame.display.flip()
 
@@ -51,3 +48,7 @@ class GameBoardManager:
     def draw_center_line(color):
         pygame.draw.line(GlobalData.screen, color, (gWidth // 2, 0), (gWidth // 2, gHeight), 2)
 
+    @staticmethod
+    def redraw():
+        GlobalData.sprite_list.draw(GlobalData.screen)
+        GlobalData.ball_list.draw(GlobalData.screen)
