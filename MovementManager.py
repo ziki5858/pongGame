@@ -13,7 +13,7 @@ class MovementManager:
         return sprites[0], sprites[1]
 
     @staticmethod
-    def get_positions(lSprite, rSprite):
+    def get_paddle_and_ball_positions(lSprite, rSprite):
         xL, yL = lSprite.get_pos()
         xR, yR = rSprite.get_pos()
         xB, yB = GlobalData.ball_list.sprites()[0].get_pos()
@@ -23,9 +23,14 @@ class MovementManager:
     def handle_player_move(event, sprite, x, y, key_map, speed):
         for dir_idx, key in enumerate(key_map):
             if event.key == key:
-                new_y = MovementManager.checkBorderS(y, speed[dir_idx], sprite.get_height())
+                new_y = MovementManager.constrain_paddle_position(y, speed[dir_idx], sprite.get_height())
                 sprite.update_loc(x, new_y)
                 break
+
+    @staticmethod
+    def _move_player_if_key(event, sprite, x, y, key_map):
+        speeds = [MovementManager.sprite_speed, -MovementManager.sprite_speed]
+        MovementManager.handle_player_move(event, sprite, x, y, key_map, speeds)
 
     @staticmethod
     def handle_ai_move(rSprite, xR, yR, ball_center, max_step):
@@ -36,29 +41,29 @@ class MovementManager:
             step = 0
         else:
             step = max(-max_step, min(delta, max_step))
-        new_y = MovementManager.checkBorderS(yR, step, rSprite.get_height())
+        new_y = MovementManager.constrain_paddle_position(yR, step, rSprite.get_height())
         rSprite.update_loc(xR, new_y)
 
     @staticmethod
     def sprite_movement(event):
         lSprite, rSprite = MovementManager.get_paddles()
-        xL, yL, xR, yR, xB, yB = MovementManager.get_positions(lSprite, rSprite)
-        speed = MovementManager.sprite_speed
+        xL, yL, xR, yR, xB, yB = MovementManager.get_paddle_and_ball_positions(lSprite, rSprite)
         ball = GlobalData.ball_list.sprites()[0]
         ball_center = yB + ball.get_height() * 0.5
 
-        if event is not None:
-            MovementManager.handle_player_move(event, lSprite, xL, yL, MovementManager.UP_DOWN_LEFT, [speed, -speed])
+        if event:
+            MovementManager._move_player_if_key(event, lSprite, xL, yL, MovementManager.UP_DOWN_LEFT)
             if not GlobalData.against_com:
-                MovementManager.handle_player_move(event, rSprite, xR, yR, MovementManager.UP_DOWN_RIGHT, [speed, -speed])
+                MovementManager._move_player_if_key(event, rSprite, xR, yR, MovementManager.UP_DOWN_RIGHT)
 
         if GlobalData.against_com:
-            MovementManager.handle_ai_move(rSprite, xR, yR, ball_center, speed)
+            MovementManager.handle_ai_move(rSprite, xR, yR, ball_center, MovementManager.sprite_speed)
 
     @staticmethod
-    def checkBorderS(object_y, move_amount, paddle_height):
-        if 0 > object_y + move_amount:
+    def constrain_paddle_position(current_y, move_amount, paddle_height):
+        new_y = current_y + move_amount
+        if new_y < 0:
             return 0
-        elif object_y + move_amount > gHeight - paddle_height:
+        elif new_y > gHeight - paddle_height:
             return gHeight - paddle_height
-        return object_y + move_amount
+        return new_y

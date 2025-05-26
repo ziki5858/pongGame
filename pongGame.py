@@ -9,6 +9,7 @@ import GlobalData
 
 def main():
     pygame.font.init()
+    BallManager.init_sounds()
     start_game()
 
 def start_game():
@@ -17,8 +18,30 @@ def start_game():
     check_quit("move")
 
 def againstWho():
-    GameTextManager.captions(50, 'press c for against com', 1, BLACK, 20, 50, False)
-    GameTextManager.captions(50, 'press f for friend com', 1, BLACK, 20, 200, True)
+    # Clear screen with white background
+    GlobalData.screen.fill(WHITE)
+
+    # Render the title text and center it
+    title_font = pygame.font.Font(None, 60)
+    title_surf = title_font.render('Choose Game Mode:', True, RED)
+    title_x = (gWidth - title_surf.get_width()) // 2
+    GlobalData.screen.blit(title_surf, (title_x, 40))
+
+    # Define the options and their vertical positions
+    options = [
+        ('Press C for Computer', 140),
+        ('Press F for Friend', 200)
+    ]
+
+    # Render each option and center it
+    font = pygame.font.Font(None, 50)
+    for text, y in options:
+        text_surf = font.render(text, True, BLACK)
+        text_x = (gWidth - text_surf.get_width()) // 2
+        GlobalData.screen.blit(text_surf, (text_x, y))
+
+    # Update the display and wait for user input
+    pygame.display.flip()
     return check_quit('start')
 
 def check_quit(status):
