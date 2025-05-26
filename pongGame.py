@@ -1,7 +1,7 @@
 import random
 import pygame
-import BoardManger
-from BoardManger import *
+from GameBoardManager import GameBoardManager
+from GameTextManager import GameTextManager
 from constants import *
 import GlobalData
 
@@ -12,29 +12,14 @@ def main():
     start_game()
 
 def start_game():
-    upload_screen("pong", WHITE, RED)
-    upload_sprites()
+    GameBoardManager.upload_screen("pong", WHITE, RED)
+    GameBoardManager.upload_sprites()
     check_quit("move")
 
 def againstWho():
-    captions(50, 'press c for against com', 1, BLACK, 20, 50, False)
-    captions(50, 'press f for friend com', 1, BLACK, 20, 200, True)
+    GameTextManager.captions(50, 'press c for against com', 1, BLACK, 20, 50, False)
+    GameTextManager.captions(50, 'press f for friend com', 1, BLACK, 20, 200, True)
     return check_quit('start')
-
-def r_screen(bColor, sColor):
-    GlobalData.screen.fill(bColor)
-    pygame.draw.line(GlobalData.screen, sColor, (gWidth / 2, 0), (gWidth / 2, gHeight), 2)
-    GlobalData.sprite_list.draw(GlobalData.screen)
-    GlobalData.ball_list.draw(GlobalData.screen)
-    show_score()
-    pygame.display.flip()
-
-def captions(font_size, caption, size, color, x, y, flip):
-    font = pygame.font.Font(None, font_size)
-    text1 = font.render(caption, size, color)
-    GlobalData.screen.blit(text1, (x, y))
-    if flip:
-        pygame.display.flip()
 
 UP_DOWN_LEFT = [pygame.K_s, pygame.K_w]
 UP_DOWN_RIGHT = [pygame.K_DOWN, pygame.K_UP]
@@ -117,7 +102,7 @@ def ball_move():
 
         update_and_draw(ball, xMove, yMove)
 
-    r_screen(WHITE, RED)
+    GameBoardManager.r_screen(WHITE, RED)
 
 def update_and_draw(ball, xMove, yMove):
     ball.update_Move(xMove, yMove)
@@ -173,26 +158,12 @@ def check_borders_ball(x_ball, y_ball, x_paddle, y_paddle, paddle_width, paddle_
 
 def check_game_over(leftLife, rightLife):
     if leftLife == 0:
-        game_over_m('Right' if not GlobalData.against_com else 'computer')
+        GameTextManager.game_over_message('Right' if not GlobalData.against_com else 'computer')
     elif rightLife == 0:
-        game_over_m("Left")
-
-def show_score():
-    score = [*GlobalData.sprite_list.sprites()[0].get_life()]
-    font = pygame.font.Font(None, 50)
-    text1 = font.render(('life left:     ' + str(+score[0])), 1, BLACK)
-    GlobalData.screen.blit(text1, (20, 30))
-    text2 = font.render(str(score[1]), 1, BLACK)
-    GlobalData.screen.blit(text2, (310, 30))
+        GameTextManager.game_over_message("Left")
 
 def game_over_m(winner):
-    GlobalData.screen.fill(WHITE)
-    captions(40, 'Game over:  ' + winner + '  win', 1, BLACK, 65, 200, False)
-    captions(25, 'Press keyBord to reGame', 1, RED, 160, 250, True)
-    clock = pygame.time.Clock()
-    while True:
-        check_quit("over")
-        clock.tick(REFRESH)
+    GameTextManager.game_over_message(winner)
 
 def check_quit(status):
     clock = pygame.time.Clock()
