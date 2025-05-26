@@ -1,13 +1,13 @@
 import pygame
-import constants
+from constants import *
 import GlobalData
-from constants import BLACK, WHITE, RED, gWidth, gHeight, BALL_AMOUNT
+
 class GameTextManager:
     @staticmethod
-    def captions(font_size, caption, size, color, x, y, flip):
+    def draw_text(text, font_size, antialias, color, x, y, flip=False):
         font = pygame.font.Font(None, font_size)
-        text1 = font.render(caption, size, color)
-        GlobalData.screen.blit(text1, (x, y))
+        rendered = font.render(text, antialias, color)
+        GlobalData.screen.blit(rendered, (x, y))
         if flip:
             pygame.display.flip()
 
@@ -26,5 +26,5 @@ class GameTextManager:
     @staticmethod
     def game_over_message(winner):
         GlobalData.screen.fill(WHITE)
-        GameTextManager.captions(40, 'Game over:  ' + winner + '  win', 1, BLACK, 65, 200, False)
-        GameTextManager.captions(25, 'Press keyBord to reGame', 1, RED, 160, 250, True)
+        GameTextManager.draw_text(f'Game over: {winner} wins', 40, True, BLACK, 65, 200)
+        GameTextManager.draw_text('Press any key to play again', 25, True, RED, 120, 250, flip=True)

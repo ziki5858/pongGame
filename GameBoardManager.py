@@ -10,15 +10,13 @@ class GameBoardManager:
     def upload_screen(title, bColor, sColor):
         pygame.init()
         GlobalData.screen = pygame.display.set_mode((gWidth, gHeight))
-        GlobalData.screen.fill(bColor)
         pygame.display.set_caption(str(title))
 
-        from pongGame import againstWho  # ייבוא מאוחר כדי למנוע לולאת ייבוא
+        from pongGame import againstWho  # delayed import to avoid circular dependency
         GlobalData.against_com = againstWho()
 
-        GlobalData.screen.fill(bColor)
-        pygame.draw.line(GlobalData.screen, sColor, (gWidth / 2, 0), (gWidth / 2, gHeight), 2)
-        pygame.display.flip()
+        GameBoardManager.clear_screen(bColor)
+        GameBoardManager.draw_center_line(sColor)
 
     @staticmethod
     def upload_sprites():
@@ -26,8 +24,7 @@ class GameBoardManager:
         GlobalData.ball_list.empty()
 
         left_paddle = Player(0, gHeight / 2)
-        paddle_width = left_paddle.get_width()
-        right_paddle = Player(gWidth - paddle_width, gHeight / 2)
+        right_paddle = Player(gWidth - left_paddle.get_width(), gHeight / 2)
         GlobalData.sprite_list.add(left_paddle, right_paddle)
 
         for _ in range(BALL_AMOUNT):
@@ -39,10 +36,18 @@ class GameBoardManager:
 
     @staticmethod
     def r_screen(bColor, sColor):
-        GlobalData.screen.fill(bColor)
-        pygame.draw.line(GlobalData.screen, sColor, (gWidth / 2, 0), (gWidth / 2, gHeight), 2)
+        GameBoardManager.clear_screen(bColor)
+        GameBoardManager.draw_center_line(sColor)
         GlobalData.sprite_list.draw(GlobalData.screen)
         GlobalData.ball_list.draw(GlobalData.screen)
         GameTextManager.show_score()
         pygame.display.flip()
+
+    @staticmethod
+    def clear_screen(color):
+        GlobalData.screen.fill(color)
+
+    @staticmethod
+    def draw_center_line(color):
+        pygame.draw.line(GlobalData.screen, color, (gWidth // 2, 0), (gWidth // 2, gHeight), 2)
 

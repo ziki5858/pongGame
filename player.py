@@ -11,7 +11,7 @@ class Player(GameSprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y - self.get_height() / 2
-        self.life = LIFE  # ← one life value per player
+        self.life = LIFE
 
     def lose_life(self):
         self.life -= 1
