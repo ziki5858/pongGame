@@ -1,71 +1,131 @@
+"""
+pongGame.py
+
+Improved Pong game manager script with enhanced documentation, clear function descriptions,
+and integration of continuous AI updates within the main loop.
+Contains:
+- main(): initializes the game environment and enters the main cycle.
+- start_game(): sets up the board and enters play mode.
+- againstWho(): displays animated opponent-selection menu.
+- check_quit(): handles core event loop for gameplay, including continuous AI and ball movement.
+
+Dependencies: pygame, GlobalData, GameBoardManager, GameTextManager,
+BallManager, MovementManager, constants, InputBox.game_settings
+"""
+
+import sys
 import random
+import math
 import pygame
+import GlobalData
+
 from GameBoardManager import GameBoardManager
 from GameTextManager import GameTextManager
 from BallManager import BallManager
 from MovementManager import MovementManager
-from constants import *
-import GlobalData
+from constants import gWidth, gHeight, WHITE, RED, BLACK, REFRESH
 from InputBox import game_settings
 
+
 def main():
+    """
+    Initialize Pygame and game settings, then start the game loop.
+    """
     pygame.init()
     GlobalData.screen = pygame.display.set_mode((gWidth, gHeight))
-    pygame.display.set_caption("Pong Settings")
+    pygame.display.set_caption("Pong")
     BallManager.init_sounds()
     game_settings()
+    # Choose opponent mode
+    GlobalData.against_com = againstWho()
     start_game()
 
+
 def start_game():
+    """
+    Prepare the game board and enter continuous play mode.
+    """
     GameBoardManager.upload_screen("pong", WHITE, RED)
     GameBoardManager.upload_sprites()
     check_quit("move")
 
+
 def againstWho():
-    GlobalData.screen.fill(WHITE)
-    title_font = pygame.font.Font(None, 60)
-    title_surf = title_font.render('Choose Game Mode:', True, RED)
-    title_x = (gWidth - title_surf.get_width()) // 2
-    GlobalData.screen.blit(title_surf, (title_x, 40))
+    """
+    Display animated opponent-selection menu and return True if Computer chosen.
+    """
+    w, h = gWidth, gHeight
+    top_base = (100, 100, 160)
+    bot_base = (180, 180, 240)
+    clock = pygame.time.Clock()
+    font_title = pygame.font.Font(None, 72)
+    font_opt = pygame.font.Font(None, 50)
+    prompt = 'Choose Game Mode'
+    options = [("Computer (C)", RED, h // 2), ("Friend (F)", RED, h // 2 + 70)]
 
-    options = [
-        ('Press C for Computer', 140),
-        ('Press F for Friend', 200)
-    ]
+    while True:
+        t = pygame.time.get_ticks()
+        pulse = (math.sin(t * 0.005) + 1) / 2
+        # Gradient background
+        top_color = [int(top_base[i] * (1 - pulse) + bot_base[i] * pulse) for i in range(3)]
+        bot_color = [int(bot_base[i] * (1 - pulse) + top_base[i] * pulse) for i in range(3)]
+        for y in range(h):
+            ratio = y / (h - 1)
+            r = int(top_color[0] * (1 - ratio) + bot_color[0] * ratio)
+            g = int(top_color[1] * (1 - ratio) + bot_color[1] * ratio)
+            b = int(top_color[2] * (1 - ratio) + bot_color[2] * ratio)
+            pygame.draw.line(GlobalData.screen, (r, g, b), (0, y), (w, y))
+        # Title and options
+        shadow = font_title.render(prompt, True, BLACK)
+        title = font_title.render(prompt, True, RED)
+        tx, ty = title.get_size()
+        GlobalData.screen.blit(shadow, ( (w-tx)//2+3, h//4+3 ))
+        GlobalData.screen.blit(title, ((w-tx)//2, h//4))
+        for label, color, yy in options:
+            surf = font_opt.render(label, True, color)
+            rect = surf.get_rect(center=(w//2, yy))
+            bg = pygame.Surface((rect.width+20, rect.height+10), pygame.SRCALPHA)
+            bg.fill((255,255,255,100))
+            GlobalData.screen.blit(bg, bg.get_rect(center=rect.center))
+            GlobalData.screen.blit(surf, rect)
+        pygame.display.flip()
+        for ev in pygame.event.get():
+            if ev.type == pygame.QUIT:
+                pygame.quit(); sys.exit()
+            if ev.type == pygame.KEYDOWN:
+                if ev.key == pygame.K_c:
+                    return True
+                if ev.key == pygame.K_f:
+                    return False
+        clock.tick(REFRESH)
 
-    font = pygame.font.Font(None, 50)
-    for text, y in options:
-        text_surf = font.render(text, True, BLACK)
-        text_x = (gWidth - text_surf.get_width()) // 2
-        GlobalData.screen.blit(text_surf, (text_x, y))
-
-    pygame.display.flip()
-    return check_quit('start')
 
 def check_quit(status):
+    """
+    Core event loop: processes input and updates AI/ball each frame.
+    status 'move': gameplay, 'start': opponent selection, 'over': restart.
+    """
     clock = pygame.time.Clock()
+
     while True:
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:
-                exit()
-            elif event.type == pygame.KEYDOWN:
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
                 if status == 'move':
                     MovementManager.sprite_movement(event)
-                if status == 'over':
+                elif status == 'over':
                     start_game()
-                if status == "start":
-                    if event.key == pygame.K_c:
-                        return True
-                    if event.key == pygame.K_f:
-                        return False
+                elif status == 'start':
+                    return againstWho()
         if status == 'move':
-            if not events and GlobalData.against_com:
-                if random.randrange(GlobalData.com_level) == 5:
-                    MovementManager.sprite_movement(None)
+            # Always update AI movement
+            MovementManager.sprite_movement(None)
+            # Move the ball and redraw
             BallManager.ball_move()
-            clock.tick(REFRESH)
+        clock.tick(REFRESH)
+
 
 if __name__ == "__main__":
     main()
-''
