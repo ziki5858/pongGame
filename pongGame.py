@@ -1,18 +1,3 @@
-"""
-pongGame.py
-
-Improved Pong game manager script with enhanced documentation, clear function descriptions,
-and integration of continuous AI updates within the main loop.
-Contains:
-- main(): initializes the game environment and enters the main cycle.
-- start_game(): sets up the board and enters play mode.
-- againstWho(): displays animated opponent-selection menu.
-- check_quit(): handles core event loop for gameplay, including continuous AI and ball movement.
-
-Dependencies: pygame, GlobalData, GameBoardManager, GameTextManager,
-BallManager, MovementManager, constants, InputBox.game_settings
-"""
-
 import sys
 import random
 import math
@@ -35,7 +20,12 @@ def main():
     GlobalData.screen = pygame.display.set_mode((gWidth, gHeight))
     pygame.display.set_caption("Pong")
     BallManager.init_sounds()
+
+    # Show settings panel
     game_settings()
+    # Clear any leftover events so first keypress registers in opponent selection
+    pygame.event.clear()
+
     # Choose opponent mode
     GlobalData.against_com = againstWho()
     start_game()
@@ -53,6 +43,7 @@ def start_game():
 def againstWho():
     """
     Display animated opponent-selection menu and return True if Computer chosen.
+    Uses polling of key state to capture first keypress immediately.
     """
     w, h = gWidth, gHeight
     top_base = (100, 100, 160)
@@ -79,24 +70,28 @@ def againstWho():
         shadow = font_title.render(prompt, True, BLACK)
         title = font_title.render(prompt, True, RED)
         tx, ty = title.get_size()
-        GlobalData.screen.blit(shadow, ( (w-tx)//2+3, h//4+3 ))
-        GlobalData.screen.blit(title, ((w-tx)//2, h//4))
+        GlobalData.screen.blit(shadow, ((w - tx) // 2 + 3, h // 4 + 3))
+        GlobalData.screen.blit(title, ((w - tx) // 2, h // 4))
         for label, color, yy in options:
             surf = font_opt.render(label, True, color)
-            rect = surf.get_rect(center=(w//2, yy))
-            bg = pygame.Surface((rect.width+20, rect.height+10), pygame.SRCALPHA)
-            bg.fill((255,255,255,100))
+            rect = surf.get_rect(center=(w // 2, yy))
+            bg = pygame.Surface((rect.width + 20, rect.height + 10), pygame.SRCALPHA)
+            bg.fill((255, 255, 255, 100))
             GlobalData.screen.blit(bg, bg.get_rect(center=rect.center))
             GlobalData.screen.blit(surf, rect)
         pygame.display.flip()
+
+        # Poll key state
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_c]:
+            return True
+        if keys[pygame.K_f]:
+            return False
+
         for ev in pygame.event.get():
             if ev.type == pygame.QUIT:
-                pygame.quit(); sys.exit()
-            if ev.type == pygame.KEYDOWN:
-                if ev.key == pygame.K_c:
-                    return True
-                if ev.key == pygame.K_f:
-                    return False
+                pygame.quit();
+                sys.exit()
         clock.tick(REFRESH)
 
 

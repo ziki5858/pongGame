@@ -8,6 +8,7 @@ from GameTextManager import GameTextManager
 class GameBoardManager:
     @staticmethod
     def upload_screen(title, bColor, sColor):
+        """Initialize Pygame screen and draw initial state."""
         pygame.init()
         GlobalData.screen = pygame.display.set_mode((gWidth, gHeight))
         pygame.display.set_caption(str(title))
@@ -20,6 +21,7 @@ class GameBoardManager:
 
     @staticmethod
     def upload_sprites():
+        """Clear existing sprites and add paddles and balls to sprite groups."""
         GlobalData.sprite_list.empty()
         GlobalData.ball_list.empty()
 
@@ -34,6 +36,7 @@ class GameBoardManager:
 
     @staticmethod
     def r_screen(bColor, sColor):
+        """Redraw entire game frame with highlights and score."""
         # redraw frame
         GameBoardManager.clear_screen(bColor)
         GameBoardManager.draw_center_line(sColor)
@@ -45,11 +48,12 @@ class GameBoardManager:
 
     @staticmethod
     def clear_screen(color):
+        """Fill background with specified color."""
         GlobalData.screen.fill(color)
 
     @staticmethod
     def draw_center_line(color):
-        # draw dashed center line for better visibility
+        """Draw improved dashed center line."""
         dash_length = 20
         gap = 10
         for y in range(0, gHeight, dash_length + gap):
@@ -59,13 +63,13 @@ class GameBoardManager:
 
     @staticmethod
     def redraw():
-        # draw sprites on top of highlights
+        """Render all sprites onto the screen."""
         GlobalData.sprite_list.draw(GlobalData.screen)
         GlobalData.ball_list.draw(GlobalData.screen)
 
     @staticmethod
     def _draw_highlights():
-        # simple glow around paddles only
+        """Draw simple glow effect around paddles only."""
         for paddle in GlobalData.sprite_list:
             rect = paddle.rect
             glow = pygame.Surface((rect.width + 20, rect.height + 20), pygame.SRCALPHA)
