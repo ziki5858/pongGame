@@ -34,8 +34,11 @@ class GameBoardManager:
 
     @staticmethod
     def r_screen(bColor, sColor):
+        # redraw frame
         GameBoardManager.clear_screen(bColor)
         GameBoardManager.draw_center_line(sColor)
+        # add ambient highlights
+        GameBoardManager._draw_highlights()
         GameBoardManager.redraw()
         GameTextManager.show_score()
         pygame.display.flip()
@@ -46,9 +49,25 @@ class GameBoardManager:
 
     @staticmethod
     def draw_center_line(color):
-        pygame.draw.line(GlobalData.screen, color, (gWidth // 2, 0), (gWidth // 2, gHeight), 2)
+        # draw dashed center line for better visibility
+        dash_length = 20
+        gap = 10
+        for y in range(0, gHeight, dash_length + gap):
+            start = (gWidth // 2, y)
+            end = (gWidth // 2, min(y + dash_length, gHeight))
+            pygame.draw.line(GlobalData.screen, color, start, end, 4)
 
     @staticmethod
     def redraw():
+        # draw sprites on top of highlights
         GlobalData.sprite_list.draw(GlobalData.screen)
         GlobalData.ball_list.draw(GlobalData.screen)
+
+    @staticmethod
+    def _draw_highlights():
+        # simple glow around paddles only
+        for paddle in GlobalData.sprite_list:
+            rect = paddle.rect
+            glow = pygame.Surface((rect.width + 20, rect.height + 20), pygame.SRCALPHA)
+            pygame.draw.rect(glow, (255, 255, 0, 60), glow.get_rect(), border_radius=10)
+            GlobalData.screen.blit(glow, (rect.x - 10, rect.y - 10))
