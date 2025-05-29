@@ -1,6 +1,6 @@
 import pygame
 from game_sprite import GameSprite
-from constants import BLACK
+from constantsGlobal import BLACK
 
 class Player(GameSprite):
     def __init__(self, x, y, life):

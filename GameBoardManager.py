@@ -1,6 +1,4 @@
-import pygame
-from constants import *
-import GlobalData
+from constantsGlobal import *
 from player import Player
 from ball import Ball
 from GameTextManager import GameTextManager

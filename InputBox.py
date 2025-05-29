@@ -1,6 +1,4 @@
-import pygame
-import GlobalData
-from constants import *
+from constantsGlobal import *
 
 class InputBox:
     def __init__(self, x, y, w, h, label, max_length=1, valid_range=(1, 9)):

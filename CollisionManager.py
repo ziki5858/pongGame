@@ -11,9 +11,7 @@ Handles collisions for Pong game:
 
 import sys
 import random
-import pygame
-import GlobalData
-from constants import gWidth, gHeight, BallSpeedPix, AddSpeedBall, Xdeviation, REFRESH
+from constantsGlobal import *
 from GameTextManager import GameTextManager
 
 

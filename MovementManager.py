@@ -1,8 +1,6 @@
-import sys
-import pygame
+
 import random
-import GlobalData
-from constants import gWidth, gHeight, REFRESH
+from constantsGlobal import *
 
 
 class MovementManager:

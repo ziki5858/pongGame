@@ -1,6 +1,5 @@
 import pygame
-from constants import *
-import GlobalData
+from constantsGlobal import *
 
 class GameTextManager:
     """Handles all game text and center line rendering."""

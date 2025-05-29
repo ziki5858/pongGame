@@ -17,13 +17,10 @@ CollisionManager, constants
 """
 
 import sys
-import random
-import pygame
-import GlobalData
 from GameBoardManager import GameBoardManager
 from GameTextManager import GameTextManager
 from CollisionManager import CollisionManager
-from constants import gWidth, WHITE, RED, REFRESH, BallSpeedPix
+from constantsGlobal import *
 
 
 class BallManager:

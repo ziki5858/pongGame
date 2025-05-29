@@ -1,7 +1,7 @@
 import pygame
 import random
 from game_sprite import GameSprite
-from constants import BLACK, BallSpeedPix
+from constantsGlobal import BLACK, BallSpeedPix
 
 class Ball(GameSprite):
     def __init__(self, x, y):

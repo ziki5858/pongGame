@@ -1,14 +1,10 @@
 import sys
-import random
 import math
-import pygame
-import GlobalData
 
 from GameBoardManager import GameBoardManager
-from GameTextManager import GameTextManager
 from BallManager import BallManager
 from MovementManager import MovementManager
-from constants import gWidth, gHeight, WHITE, RED, BLACK, REFRESH
+from constantsGlobal import *
 from InputBox import game_settings
 
 
