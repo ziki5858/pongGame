@@ -1,6 +1,6 @@
 import sys
-import math
 
+from GameTextManager import GameTextManager
 from GameBoardManager import GameBoardManager
 from BallManager import BallManager
 from MovementManager import MovementManager
@@ -38,56 +38,51 @@ def start_game():
 
 def againstWho():
     """
-    Display animated opponent-selection menu and return True if Computer chosen.
-    Uses polling of key state to capture first keypress immediately.
+    Displays an animated menu for selecting opponent type.
+    Returns True if Computer is selected, False for Friend.
     """
-    w, h = gWidth, gHeight
     top_base = (100, 100, 160)
-    bot_base = (180, 180, 240)
-    clock = pygame.time.Clock()
-    font_title = pygame.font.Font(None, 72)
-    font_opt = pygame.font.Font(None, 50)
+    bottom_base = (180, 180, 240)
     prompt = 'Choose Game Mode'
-    options = [("Computer (C)", RED, h // 2), ("Friend (F)", RED, h // 2 + 70)]
+    options = [
+        ("Computer (C)", RED, gHeight // 2),
+        ("Friend (F)", RED, gHeight // 2 + 70)
+    ]
+    title_font = pygame.font.Font(None, 72)
+    option_font = pygame.font.Font(None, 50)
+    clock = pygame.time.Clock()
 
     while True:
-        t = pygame.time.get_ticks()
-        pulse = (math.sin(t * 0.005) + 1) / 2
-        # Gradient background
-        top_color = [int(top_base[i] * (1 - pulse) + bot_base[i] * pulse) for i in range(3)]
-        bot_color = [int(bot_base[i] * (1 - pulse) + top_base[i] * pulse) for i in range(3)]
-        for y in range(h):
-            ratio = y / (h - 1)
-            r = int(top_color[0] * (1 - ratio) + bot_color[0] * ratio)
-            g = int(top_color[1] * (1 - ratio) + bot_color[1] * ratio)
-            b = int(top_color[2] * (1 - ratio) + bot_color[2] * ratio)
-            pygame.draw.line(GlobalData.screen, (r, g, b), (0, y), (w, y))
-        # Title and options
-        shadow = font_title.render(prompt, True, BLACK)
-        title = font_title.render(prompt, True, RED)
-        tx, ty = title.get_size()
-        GlobalData.screen.blit(shadow, ((w - tx) // 2 + 3, h // 4 + 3))
-        GlobalData.screen.blit(title, ((w - tx) // 2, h // 4))
-        for label, color, yy in options:
-            surf = font_opt.render(label, True, color)
-            rect = surf.get_rect(center=(w // 2, yy))
-            bg = pygame.Surface((rect.width + 20, rect.height + 10), pygame.SRCALPHA)
-            bg.fill((255, 255, 255, 100))
-            GlobalData.screen.blit(bg, bg.get_rect(center=rect.center))
-            GlobalData.screen.blit(surf, rect)
+        # draw pulsating gradient background
+        GameTextManager.draw_gradient_background(
+            GlobalData.screen,
+            gWidth, gHeight,
+            top_base, bottom_base
+        )
+
+        # draw centered menu title and options
+        GameTextManager.draw_menu(
+            GlobalData.screen,
+            gWidth, gHeight,
+            prompt, options,
+            title_font, option_font
+        )
+
         pygame.display.flip()
 
-        # Poll key state
+        # poll keyboard for selection
         keys = pygame.key.get_pressed()
         if keys[pygame.K_c]:
             return True
         if keys[pygame.K_f]:
             return False
 
-        for ev in pygame.event.get():
-            if ev.type == pygame.QUIT:
-                pygame.quit();
+        # handle quit
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
                 sys.exit()
+
         clock.tick(REFRESH)
 
 
@@ -97,7 +92,6 @@ def check_quit(status):
     status 'move': gameplay, 'start': opponent selection, 'over': restart.
     """
     clock = pygame.time.Clock()
-
     while True:
         events = pygame.event.get()
         for event in events:
