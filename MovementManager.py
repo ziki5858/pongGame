@@ -1,7 +1,5 @@
-
 import random
 from constantsGlobal import *
-
 
 class MovementManager:
     """Static class managing player and AI paddle movements with multi-ball support and difficulty scaling."""
@@ -38,12 +36,25 @@ class MovementManager:
         paddle_x = ai_paddle.get_pos()[0]
         time_to_hit = (paddle_x - bx) / dx
         pred_y = by + dy * time_to_hit
-        # reflect on walls
+        # Reflect on walls
         period = 2 * (gHeight - ball.get_height())
         mod = pred_y % period
         if mod > (gHeight - ball.get_height()):
             mod = period - mod
         return mod + ball.get_height() / 2, time_to_hit
+
+    @staticmethod
+    def _get_best_ball_target():
+        """Return predicted Y of the soonest ball to reach AI paddle, or None."""
+        best_target = None
+        best_time = float('inf')
+        # Iterate directly over the group to avoid building a list
+        for ball in GlobalData.ball_list:
+            pred, t = MovementManager._predict_ball_intercept(ball)
+            if 0 <= t < best_time:
+                best_time = t
+                best_target = pred
+        return best_target
 
     @staticmethod
     def _move_ai(paddle, target_y):
@@ -62,7 +73,7 @@ class MovementManager:
             3: (0.2, 8, 20, 0.0),
         }[level]
         alpha, max_speed, dead_zone, skip = settings
-        # random skip for mistakes
+        # Random skip for mistakes
         if random.random() < skip:
             return
         if abs(error) <= dead_zone:
@@ -79,34 +90,24 @@ class MovementManager:
         if len(paddles) < 2:
             return
         left_paddle, right_paddle = paddles
-        # Human movement
+        # Human movement on key press
         if event and event.type == pygame.KEYDOWN:
             MovementManager._move_player(event, left_paddle, MovementManager.key_map_left)
             if not GlobalData.against_com:
                 MovementManager._move_player(event, right_paddle, MovementManager.key_map_right)
-        # AI movement
+        # AI continuous movement
         if GlobalData.against_com:
-            best_target, best_time = None, float('inf')
-            for ball in GlobalData.ball_list.sprites():
-                pred, t = MovementManager._predict_ball_intercept(ball)
-                if 0 <= t < best_time:
-                    best_time, best_target = t, pred
-            if best_target is not None:
-                MovementManager._move_ai(right_paddle, best_target)
+            target = MovementManager._get_best_ball_target()
+            MovementManager._move_ai(right_paddle, target)
 
     @staticmethod
     def game_loop_movement(clock):
-        """Continuous AI updates without events."""
+        """Continuous AI updates without specific events."""
         if GlobalData.against_com:
             paddles = GlobalData.sprite_list.sprites()
             if len(paddles) < 2:
                 return
             _, right_paddle = paddles
-            best_target, best_time = None, float('inf')
-            for ball in GlobalData.ball_list.sprites():
-                pred, t = MovementManager._predict_ball_intercept(ball)
-                if 0 <= t < best_time:
-                    best_time, best_target = t, pred
-            if best_target is not None:
-                MovementManager._move_ai(right_paddle, best_target)
+            target = MovementManager._get_best_ball_target()
+            MovementManager._move_ai(right_paddle, target)
         clock.tick(REFRESH)
