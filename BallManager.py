@@ -1,7 +1,5 @@
-import sys
 from constantsGlobal import *
 from GameBoardManager import GameBoardManager
-from GameTextManager import GameTextManager
 from CollisionManager import CollisionManager
 
 class BallManager:
@@ -71,9 +69,7 @@ class BallManager:
                     )
 
         BallManager._update_and_draw(ball, x_move, y_move)
-        BallManager._check_game_over(
-            left_paddle.get_life(), right_paddle.get_life()
-        )
+        CollisionManager.check_game_over()
 
     @staticmethod
     def _update_and_draw(ball, x_move, y_move):
@@ -81,32 +77,6 @@ class BallManager:
         ball.update_Move(x_move, y_move)
         x, y = ball.get_pos()
         ball.update_loc(x + x_move, y + y_move)
-
-    @staticmethod
-    def _check_game_over(left_life, right_life):
-        """Trigger game over sequence if a paddle's life reaches zero."""
-        if left_life == 0:
-            GameTextManager.game_over_message(
-                'Computer' if GlobalData.against_com else 'Right'
-            )
-            BallManager._wait_for_restart()
-        elif right_life == 0:
-            GameTextManager.game_over_message('Left')
-            BallManager._wait_for_restart()
-
-    @staticmethod
-    def _wait_for_restart():
-        """Pause game until the user presses a key to restart or quit."""
-        clock = pygame.time.Clock()
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                if event.type == pygame.KEYDOWN:
-                    from pongGame import start_game
-                    start_game()
-            clock.tick(REFRESH)
 
     @staticmethod
     def play_sound(sound):

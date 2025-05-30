@@ -13,12 +13,6 @@ class Player(GameSprite):
         self.leftLife = life
         self.rightLife = life
 
-    def update_left_Life(self):
-        self.leftLife -= 1
-
-    def update_right_Life(self):
-        self.rightLife -= 1
-
     def lose_life(self, side):
         if side == 'left':
             self.leftLife -= 1

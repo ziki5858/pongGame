@@ -3,6 +3,7 @@ from player import Player
 from ball import Ball
 from GameTextManager import GameTextManager
 
+
 class GameBoardManager:
     @staticmethod
     def upload_screen(title, bColor, sColor):
@@ -15,7 +16,7 @@ class GameBoardManager:
         GlobalData.against_com = againstWho()
 
         GameBoardManager.clear_screen(bColor)
-        GameBoardManager.draw_center_line(sColor)
+        GameTextManager.draw_center_line(sColor)
 
     @staticmethod
     def upload_sprites():
@@ -37,7 +38,7 @@ class GameBoardManager:
         """Redraw entire game frame with highlights and score."""
         # redraw frame
         GameBoardManager.clear_screen(bColor)
-        GameBoardManager.draw_center_line(sColor)
+        GameTextManager.draw_center_line(sColor)
         # add ambient highlights
         GameBoardManager._draw_highlights()
         GameBoardManager.redraw()
@@ -48,16 +49,6 @@ class GameBoardManager:
     def clear_screen(color):
         """Fill background with specified color."""
         GlobalData.screen.fill(color)
-
-    @staticmethod
-    def draw_center_line(color):
-        """Draw improved dashed center line."""
-        dash_length = 20
-        gap = 10
-        for y in range(0, gHeight, dash_length + gap):
-            start = (gWidth // 2, y)
-            end = (gWidth // 2, min(y + dash_length, gHeight))
-            pygame.draw.line(GlobalData.screen, color, start, end, 4)
 
     @staticmethod
     def redraw():
