@@ -1,17 +1,13 @@
 import random
 from constantsGlobal import *
 
+
 class MovementManager:
     """Static class managing player and AI paddle movements with multi-ball support and difficulty scaling."""
 
     sprite_speed: int = 25  # Human paddle movement speed
     key_map_left = {pygame.K_w: -1, pygame.K_s: 1}
     key_map_right = {pygame.K_UP: -1, pygame.K_DOWN: 1}
-
-    @staticmethod
-    def _constrain_y(y: float, paddle_height: int) -> float:
-        """Ensure paddle stays within vertical bounds."""
-        return max(0, min(y, gHeight - paddle_height))
 
     @staticmethod
     def _move_player(event, paddle, key_map):
@@ -21,7 +17,7 @@ class MovementManager:
             return
         x, y = paddle.get_pos()
         dy = direction * MovementManager.sprite_speed
-        new_y = MovementManager._constrain_y(y + dy, paddle.get_height())
+        new_y = paddle.clamp_y(y + dy)
         paddle.update_loc(x, new_y)
 
     @staticmethod
@@ -80,7 +76,7 @@ class MovementManager:
             return
         step = alpha * error
         step = max(-max_speed, min(max_speed, step))
-        new_y = MovementManager._constrain_y(y + step, h)
+        new_y = paddle.clamp_y(y + step)
         paddle.update_loc(x, new_y)
 
     @staticmethod

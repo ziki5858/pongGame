@@ -15,7 +15,7 @@ class GameTextManager:
             pygame.display.flip()
 
     @staticmethod
-    def _font_width(text, font_size):
+    def font_width(text, font_size):
         """Return the width in pixels of rendered text for centering."""
         font = pygame.font.Font(None, font_size)
         return font.size(text)[0]
@@ -107,7 +107,7 @@ class GameTextManager:
         color = pygame.Color('limegreen') if enabled else pygame.Color('gray50')
         pygame.draw.rect(GlobalData.screen, color, rect, border_radius=10)
         # center text inside button
-        text_w = GameTextManager._font_width(text, font_size)
+        text_w = GameTextManager.font_width(text, font_size)
         x = rect.x + (rect.width - text_w) // 2
         y = rect.y + (rect.height - font_size) // 2
         GameTextManager.draw_text(text, font_size, True, pygame.Color('white'), x, y)

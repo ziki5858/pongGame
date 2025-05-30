@@ -1,6 +1,7 @@
 from constantsGlobal import *
 from GameTextManager import GameTextManager
 
+
 class InputBox:
     def __init__(self, x, y, w, h, label, max_length=1, valid_range=(1, 9)):
         self.rect = pygame.Rect(x, y, w, h)
@@ -34,7 +35,7 @@ class InputBox:
         # draw labeled box
         label = f"{self.label} ({self.valid_range[0]}–{self.valid_range[1]})"
         GameTextManager.draw_text(label, 28, True, pygame.Color('white'),
-                                  self.rect.x - 15 - GameTextManager._font_width(label, 28),
+                                  self.rect.x - 15 - GameTextManager.font_width(label, 28),
                                   self.rect.y + 8)
         # box background and border
         pygame.draw.rect(screen, pygame.Color('white'), self.rect, border_radius=5)
@@ -58,12 +59,12 @@ def game_settings():
 
     # prepare input boxes
     boxes = [
-        InputBox(250, 150, 80, 50, 'Balls', max_length=1, valid_range=(1,3)),
-        InputBox(250, 240, 80, 50, 'Lives', max_length=1, valid_range=(1,9)),
-        InputBox(250, 330, 80, 50, 'AI Lv', max_length=1, valid_range=(1,3)),
+        InputBox(250, 150, 80, 50, 'Balls', max_length=1, valid_range=(1, 3)),
+        InputBox(250, 240, 80, 50, 'Lives', max_length=1, valid_range=(1, 9)),
+        InputBox(250, 330, 80, 50, 'AI Lv', max_length=1, valid_range=(1, 3)),
     ]
 
-    btn_rect = pygame.Rect((gWidth//2 - 100, 420, 200, 60))
+    btn_rect = pygame.Rect((gWidth // 2 - 100, 420, 200, 60))
 
     running = True
     while running:
@@ -83,7 +84,7 @@ def game_settings():
         GameTextManager.draw_settings_background(screen, gWidth, gHeight)
         GameTextManager.draw_text('Ready to Pong!', font_size, True,
                                   pygame.Color('white'),
-                                  (gWidth - GameTextManager._font_width('Ready to Pong!', font_size))//2,
+                                  (gWidth - GameTextManager.font_width('Ready to Pong!', font_size)) // 2,
                                   50)
 
         for box in boxes:
@@ -97,7 +98,7 @@ def game_settings():
         if valid and btn_rect.collidepoint(pygame.mouse.get_pos()) and clicked:
             GlobalData.ball_amount = boxes[0].get_value()
             GlobalData.player_life = boxes[1].get_value()
-            level_map = {1:30, 2:15, 3:5}
+            level_map = {1: 30, 2: 15, 3: 5}
             GlobalData.com_level = level_map[boxes[2].get_value()]
             running = False
 
