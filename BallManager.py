@@ -1,86 +1,108 @@
-from constantsGlobal import *
+import pygame
+from constantsGlobal import (
+    gWidth, WHITE, RED, BallSpeedPix, GlobalData
+)
 from GameBoardManager import GameBoardManager
 from CollisionManager import CollisionManager
 
+
 class BallManager:
-    """Static manager for ball movement, collisions, and sound effects."""
-    sounds = []
+    """Static manager: updates ball logic, plays SFX and redraws board."""
+
+    # ------------------------------------------------------------------
+    # Static “assets” – loaded once
+    # ------------------------------------------------------------------
+    _SOUNDS: list[pygame.mixer.Sound] = []
+    _Y_SPEEDS: tuple[int, int] = (+BallSpeedPix, -BallSpeedPix)
+
+    # ------------------------  public API  -----------------------------
 
     @staticmethod
     def init_sounds():
-        """Initialize mixer and load sound effects."""
-        pygame.mixer.init(frequency=22050, size=-16, channels=4)
-        BallManager.sounds = [
-            pygame.mixer.Sound('Swipe Swoosh Transition Sound Effect.mp3'),
-            pygame.mixer.Sound('Video Game Beep - Sound Effect.mp3'),
+        """Load sound effects (call once at program start)."""
+        if BallManager._SOUNDS:        # already loaded
+            return
+        pygame.mixer.init(frequency=22_050, size=-16, channels=4)
+        BallManager._SOUNDS = [
+            pygame.mixer.Sound("Swipe Swoosh Transition Sound Effect.mp3"),
+            pygame.mixer.Sound("Video Game Beep - Sound Effect.mp3"),
         ]
 
     @staticmethod
     def move_balls():
-        """Move all balls: handle collisions and redraw the game board."""
-        y_speeds = [abs(BallSpeedPix), -abs(BallSpeedPix)]
+        """Move every ball, handle collisions, then redraw the screen."""
         paddles = list(GlobalData.sprite_list)
         if len(paddles) != 2:
-            return
-        left_paddle, right_paddle = paddles
+            return                     # safety: need exactly 2 paddles
+        left_pad, right_pad = paddles
 
         for idx, ball in enumerate(GlobalData.ball_list):
             BallManager._move_single_ball(
-                ball, idx,
-                left_paddle, right_paddle,
-                right_paddle.get_width(), right_paddle.get_height(),
-                y_speeds
+                ball, idx, left_pad, right_pad
             )
 
-        # Redraw background and flip display
+        BallManager._redraw_screen()
+
+    # *legacy name*  – used by older code such as pongGame.py
+    ball_move = move_balls
+
+    # ------------------------  internals  ------------------------------
+
+    @staticmethod
+    def _move_single_ball(ball, idx, left_pad, right_pad):
+        """Physics + scoring for one ball in the list."""
+        x, y = ball.get_pos()
+        vx, vy = ball.get_move()
+
+        # 1. Paddle collision
+        new_vel = CollisionManager.handle_paddle_collision(
+            ball, left_pad, right_pad,
+            vx,
+            right_pad.get_width(), right_pad.get_height(),
+            BallManager._SOUNDS[0],
+            BallManager._Y_SPEEDS,
+            BallManager.play_sound,
+        )
+        if new_vel:
+            vx, vy = new_vel
+
+        # 2. Wall collision (top/bottom)
+        else:
+            wall_vy = CollisionManager.handle_wall_collision(
+                y, vy, ball.get_height()
+            )
+            if wall_vy is not None:
+                vy = wall_vy
+
+            # 3. Side collision (score / out-of-bounds)
+            elif x <= 0 or x >= gWidth - ball.get_width():
+                vx, vy = CollisionManager.handle_side_collision(
+                    ball, idx, x, BallManager._SOUNDS
+                )
+
+        BallManager._apply_motion(ball, vx, vy)
+        CollisionManager.check_game_over()
+
+    # --- tiny helpers --------------------------------------------------
+
+    @staticmethod
+    def _apply_motion(ball, vx, vy):
+        """Write new velocity and advance the ball by one step."""
+        ball.update_Move(vx, vy)            # keep legacy name!
+        x, y = ball.get_pos()
+        ball.update_loc(x + vx, y + vy)
+
+    @staticmethod
+    def _redraw_screen():
+        """Clear, draw board & flip once per frame."""
         GameBoardManager.r_screen(WHITE, RED)
         pygame.display.flip()
 
-    ball_move = move_balls  # Legacy alias
+    # ------------------------  SFX helper ------------------------------
 
     @staticmethod
-    def _move_single_ball(ball, idx, left_paddle, right_paddle,
-                          paddle_w, paddle_h, y_speeds):
-        """Handle movement, collision, and sound for a single ball."""
-        x_pos, y_pos = ball.get_pos()
-        x_move, y_move = ball.get_move()
-
-        # Paddle collision
-        result = CollisionManager.handle_paddle_collision(
-            ball, left_paddle, right_paddle,
-            x_move, paddle_w, paddle_h,
-            BallManager.sounds[0], y_speeds,
-            BallManager.play_sound
-        )
-        if result:
-            x_move, y_move = result
-        else:
-            # Wall collision
-            wall_res = CollisionManager.handle_wall_collision(
-                y_pos, y_move, ball.get_height()
-            )
-            if wall_res is not None:
-                y_move = wall_res
-            else:
-                # Side collision and scoring
-                if x_pos <= 0 or x_pos >= gWidth - ball.get_width():
-                    x_move, y_move = CollisionManager.handle_side_collision(
-                        ball, idx, x_pos, BallManager.sounds
-                    )
-
-        BallManager._update_and_draw(ball, x_move, y_move)
-        CollisionManager.check_game_over()
-
-    @staticmethod
-    def _update_and_draw(ball, x_move, y_move):
-        """Update ball position and draw on screen."""
-        ball.update_Move(x_move, y_move)
-        x, y = ball.get_pos()
-        ball.update_loc(x + x_move, y + y_move)
-
-    @staticmethod
-    def play_sound(sound):
-        """Queue a sound effect on the next available mixer channel."""
+    def play_sound(sound: pygame.mixer.Sound):
+        """Play given SFX on the first free channel (non-blocking)."""
         channel = pygame.mixer.find_channel()
         if channel:
             channel.queue(sound)
